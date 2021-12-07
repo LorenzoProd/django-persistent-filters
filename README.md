@@ -29,9 +29,15 @@ Add the urls with a filter form in `settings.py` file:
 ```python
 PERSISTENT_FILTERS_URLS = [
     # You can use name urls
-    reverse_lazy('user:list'),
+    reverse_lazy("user:list"),
 
     # or you can write the path without domain
-    '/user/list'
+    "/user/list"
 ]
+```
+
+Add in the form the button for reset filters:
+
+```html
+<button type="submit" name="reset-filters">Reset</button>
 ```

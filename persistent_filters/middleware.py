@@ -14,7 +14,7 @@ class PersistentFiltersMiddleware:
             return response
 
         query_string = request.META['QUERY_STRING']
-        if 'delete-filters' in request.META['QUERY_STRING']:
+        if 'reset-filters' in request.META['QUERY_STRING']:
             response = redirect(path)
             response.delete_cookie('filters{}'.format(path.replace('/', '_')))
             return response
