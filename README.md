@@ -24,9 +24,9 @@ MIDDLEWARE = [
 ]
 ```
 
-If you want to store filters in the Request object instead Cookies, add in the `settings.py` file:
+If you want to store filters in the session instead Cookies, add in the `settings.py` file:
 ```python
-PERSISTENT_FILTERS_IN_REQUEST = True
+PERSISTENT_FILTERS_IN_SESSION = True
 ```
 Add the urls with a filter form in `settings.py` file:
 

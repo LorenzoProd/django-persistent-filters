@@ -7,8 +7,15 @@ class PersistentFiltersMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
 
+    def _filter_query_string(self, query_string):
+        excluded_params = getattr(settings, 'EXCLUDED_FILTER_PARAMS', ['_export'])
+        parsed_qs = urllib.parse.parse_qs(query_string)
+        parsed_qs = {key: value for key, value in parsed_qs.items() if key not in excluded_params}
+        filtered_query_string = urllib.parse.urlencode(parsed_qs, doseq=True)
+        return filtered_query_string
+
     def _set_filters(self):
-        if self.use_request:
+        if self.use_session:
             self.request.session[self.key] = self.query_string
             return
         self.response.set_cookie(
@@ -19,7 +26,7 @@ class PersistentFiltersMiddleware:
 
     def _delete_filters(self):
         self.response = redirect(self.path)
-        if self.use_request:
+        if self.use_session:
             if not self.request.session.get(self.key):
                 return
             self.request.session.pop(self.key)
@@ -27,19 +34,21 @@ class PersistentFiltersMiddleware:
         self.response.delete_cookie(self.key)
 
     def _key_is_set(self):
-        if self.use_request:
+        if self.use_session:
             return self.request.session.get(self.key)
         return self.request.COOKIES.get(self.key)
 
     def _get_redirect_url(self):
-        if self.use_request:
+        if self.use_session:
             return self.request.path + '?' + self.request.session.get(self.key)
         return self.request.path + '?' + self.request.COOKIES.get(self.key)
 
     def __call__(self, request):
-        self.use_request = False
         if hasattr(settings, 'PERSISTENT_FILTERS_IN_REQUEST'):
-            self.use_request = getattr(settings, 'PERSISTENT_FILTERS_IN_REQUEST')
+            raise Exception("PERSISTENT_FILTERS_IN_REQUEST deprecated. Use PERSISTENT_FILTERS_IN_SESSION instead.")
+        self.use_session = False
+        if hasattr(settings, 'PERSISTENT_FILTERS_IN_SESSION'):
+            self.use_session = getattr(settings, 'PERSISTENT_FILTERS_IN_SESSION')
         self.request = request
         self.response = self.get_response(self.request)
         self.path = request.path_info
@@ -48,8 +57,9 @@ class PersistentFiltersMiddleware:
         if self.path not in settings.PERSISTENT_FILTERS_URLS:
             return self.response
 
-        self.query_string = request.META['QUERY_STRING']
-        if 'reset-filters' in request.META['QUERY_STRING']:
+        self.query_string = self._filter_query_string(request.META['QUERY_STRING'])
+
+        if 'reset-filters' in self.query_string:
             self._delete_filters()
             return self.response
 
