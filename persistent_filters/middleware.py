@@ -2,6 +2,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.conf import settings
 
+import urllib
 
 class PersistentFiltersMiddleware:
     def __init__(self, get_response):
